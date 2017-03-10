@@ -22,6 +22,7 @@
 		<module>fr.inria.diverse.docl.repository</module>
 		<module>fr.inria.diverse.docl.tests</module>
 		<module>fr.inria.diverse.docl.ui.tests</module>
+		<module>fr.inria.diverse.docl.spark</module>
 	</modules>
 	<build>
 		<plugins>
@@ -262,6 +263,11 @@
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
+		</repository>
+		<repository>
+			<id>NeoEMF</id>
+			<name>NeoEMF update site</name>
+			<url>https://atlanmod.github.io/NeoEMF/releases/latest/plugin/</url>			
 		</repository>
 	</repositories>
 	<pluginRepositories>
