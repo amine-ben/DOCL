@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: fr.inria.diverse.docl.ide; singleton:=true
+Export-Package: fr.inria.diverse.docl.ide.contentassist.antlr.internal
+ ,fr.inria.diverse.docl.ide.contentassist.antlr
+Bundle-Name: fr.inria.diverse.docl.ide
+Bundle-Version: 1.0.0.201703021236
+Require-Bundle: fr.inria.diverse.docl,org.eclipse.xtext.ide,org.eclips
+ e.xtext.xbase.ide
+Bundle-ManifestVersion: 2
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-Vendor: My Company
+

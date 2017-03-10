@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<units size='2'>
+  <unit id='201703021236.main' version='1.0.0.2--cDkzM67735G3937579E'>
+    <properties size='2'>
+      <property name='org.eclipse.equinox.p2.name' value='DOcl'/>
+      <property name='org.eclipse.equinox.p2.type.category' value='true'/>
+    </properties>
+    <provides size='1'>
+      <provided namespace='org.eclipse.equinox.p2.iu' name='201703021236.main' version='1.0.0.2--cDkzM67735G3937579E'/>
+    </provides>
+    <requires size='1'>
+      <required namespace='org.eclipse.equinox.p2.iu' name='fr.inria.diverse.docl.feature.feature.group' range='[1.0.0.201703021236,1.0.0.201703021236]'/>
+    </requires>
+    <touchpoint id='null' version='0.0.0'/>
+  </unit>
+  <unit id='201703021236.main.source' version='1.0.0.2--cDkzX57735G3937579E'>
+    <properties size='2'>
+      <property name='org.eclipse.equinox.p2.name' value='DOcl (Sources)'/>
+      <property name='org.eclipse.equinox.p2.type.category' value='true'/>
+    </properties>
+    <provides size='1'>
+      <provided namespace='org.eclipse.equinox.p2.iu' name='201703021236.main.source' version='1.0.0.2--cDkzX57735G3937579E'/>
+    </provides>
+    <requires size='1'>
+      <required namespace='org.eclipse.equinox.p2.iu' name='fr.inria.diverse.docl.feature.source.feature.group' range='[1.0.0.201703021236,1.0.0.201703021236]'/>
+    </requires>
+    <touchpoint id='null' version='0.0.0'/>
+  </unit>
+</units>

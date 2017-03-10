@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature id="fr.inria.diverse.docl.feature"
+	label="DOcl Feature "
+	version="1.0.0.201703021236">
+	<plugin
+			id="fr.inria.diverse.docl"
+			download-size="68"
+			install-size="145"
+			version="1.0.0.201703021236"
+			unpack="false"/>
+	<plugin
+			id="fr.inria.diverse.docl.ide"
+			download-size="22"
+			install-size="59"
+			version="1.0.0.201703021236"
+			unpack="false"/>
+	<plugin
+			id="fr.inria.diverse.docl.ui"
+			download-size="19"
+			install-size="43"
+			version="1.0.0.201703021236"
+			unpack="false"/>
+</feature>

@@ -1,0 +1,430 @@
+grammar fr.inria.diverse.dDOcl.DDOcl with  org.eclipse.xtext.common.Terminals
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+generate dDOcl "http://www.inria.fr/diverse/dDOcl"
+
+
+/*
+ * *********************************************
+ * 						Header
+ * *********************************************
+ */
+Module returns Module:
+	{Module}
+	'module' name=ID
+	
+		'@@source' source=DOclModel
+		'@@input' input=DOclModel
+ 		( imports+=Import ( imports+=Import)*)?
+		( elements+=ModuleElement (elements+=ModuleElement)*)?
+	;
+
+DOclModel returns DOclModel :
+	name=ID
+	(uri=URI_)?
+;
+
+URI_ returns URI_:
+	'uri='scheme=SCHEME'://' // Scheme
+	authority=AUTHORITY'/' // 
+	fragment_=FRAGMENT	// 
+;
+
+FRAGMENT:
+	ID('/'ID)*
+;
+
+AUTHORITY:
+	ID('.'ID)*(':'INT)? //TODO limit the number of characters 
+;
+
+terminal SCHEME:
+	'http'|'file'|'platform'|'neoemfhbase'
+;
+
+Import returns Import:
+	{Import}
+	'imports'
+	name=ID;
+
+
+ModuleElement returns ModuleElement:
+	Query // TODO extend this with additional moduleElements
+;
+
+Query returns Query:
+	{Query}
+	'query' name=ID ':' body=DOclExpression';'
+;
+
+/**
+ * ********************************************
+ * 					Operators
+ * *******************************************
+ */
+	 
+UnaryOperator:
+	'-' | 'not' // 
+;
+MultiOperator :
+		'*' | '/' // multiplication
+;
+AdditionOperator :
+	 '+' | '-' // Addition
+;
+ComparisonOperator : 
+	 '>' | '<' | '>=' | '<='//comparison
+;
+EqualityOperator : 
+	 '=' | '<>' // Equality
+;
+
+AndOperator : 
+	'and' 
+;
+OrOperator : 
+	'or'
+;
+XorOperator :
+	'xor'
+;
+ImpliesOperator : 
+	'implies'
+;
+
+BooleanOperator:
+	XorOperator | OrOperator | AndOperator | ImpliesOperator // Boolean
+;
+NavigationOperator:
+	'.' | '->' 
+;
+ 
+ CollectionOperationID returns ecore::EString :
+	'size'
+	| 'includes'
+	| 'excludes'
+	| 'count'
+	| 'includesAll'
+	| 'excludesAll'
+	| 'isEmpty'
+	| 'notEmpty'
+	| 'sum'
+	| 'asBag'
+	| 'asSet'
+	| 'asSequence'
+	| 'union'
+	| 'flatten'
+	| 'append'
+	| 'prepend'
+	| 'insertAt'
+	| 'subSequence'
+	| 'at'
+	| 'indexOf'
+	| 'first'
+	| 'last'
+	| 'including'
+	| 'excluding'	
+;
+ 
+ 
+IterativeOperationID returns ecore::EString:
+	'exists'
+	| 'forAll'
+	| 'isUnique'
+	| 'any'
+	| 'one'
+	| 'collect'
+	| 'select'
+	| 'reject'	
+;
+
+/**
+ * ********************************************
+ * 					Expressions
+ * ********************************************
+ * 
+ * Using the delegate pattern to respect rule precedence
+ */
+ 
+ 
+DOclExpression returns DOclExpression:
+	ImpliesOpExp
+	| LetExp 
+	| UnaryOpExp
+;
+
+
+
+LetExp returns DOclExpression :
+	name='let' variable=LocalVariable 'in' in=DOclExpression;
+	
+UnaryOpExp returns DOclExpression:
+	name=UnaryOperator target=DOclExpression		
+;
+
+ImpliesOpExp returns DOclExpression:
+	XorOpExp ({BoolOpCallExp.source=current} name=ImpliesOperator target=XorOpExp)*
+;
+
+XorOpExp returns DOclExpression:
+	OrOpExp ({BoolOpCallExp.source=current} name=XorOperator target=OrOpExp)*
+;
+
+OrOpExp returns DOclExpression:
+	AndOpExp ({BoolOpCallExp.source=current} name=OrOperator target=AndOpExp)*
+;
+
+AndOpExp returns DOclExpression:
+	EqOpExp ({BoolOpCallExp.source=current} name=AndOperator target=EqOpExp)*
+;
+
+EqOpExp returns DOclExpression :
+	ComparisonOpExp ({EqOpCallExp.source=current} name=('<>'|'=') target=ComparisonOpExp)*
+;
+
+ComparisonOpExp returns DOclExpression:
+	AdditionOpExp ({ComOpCallExp.source=current} name=('>' | '<' | '>=' | '<=') target=AdditionOpExp)*
+;
+
+AdditionOpExp returns DOclExpression : 
+	MultiOpExp ({AddOpCallExp.source=current} name=('+'|'-') target=MultiOpExp)*
+;
+
+MultiOpExp returns DOclExpression : 
+	NavOpExp ({MulOpCallExp.source=current} name=('*'|'/') target=NavOpExp)*
+;
+
+NavOpExp returns DOclExpression:
+	NavigationOpCallExp (({NavigationExp.source=current} name=NavigationOperator target=NavigationOpCallExp)*)? 
+;
+
+
+NavigationOpCallExp returns DOclExpression :
+	OperationCall
+	| NavigationOrAttributeCall
+	| IterateExp
+	| IteratorExp
+	| CollectionOpCall
+	|PrimaryExp
+;
+
+
+
+CollectionOpCall returns DOclExpression:
+	{CollectionOpCallExp} name=CollectionOperationID '(' (arguments+=DOclExpression ("," arguments+=DOclExpression)*)? ')'
+;
+
+
+IterateExp returns DOclExpression:
+	{IterateExp}name='iterate' '(' iterators+=Iterator  (','iterators+=Iterator)* ';'result=LocalVariable '|' body=DOclExpression')'
+;
+
+Iterator:
+	name=ID (':' type=DOclType)?
+; 
+
+IteratorExp returns DOclExpression:
+	{IteratorExp} name=IterativeOperationID '(' iterators+=Iterator  (','iterators+=Iterator)*  '|' body=DOclExpression')'	
+;
+
+
+NavigationOrAttributeCall returns DOclExpression:
+	{NavigationOrAttributeCall}feature=ID 
+;
+
+OperationCall returns DOclExpression:
+	{OperationCall} name=ID '(' (arguments+=DOclExpression ("," arguments+=DOclExpression)*)? ')'
+;
+
+DOclModelElementExp returns DOclExpression: 
+		model=DOclModel name='::' elements+=ID ('::'elements+=ID)* (target=AllInstancesOpCall)?
+;
+
+AllInstancesOpCall returns DOclExpression :
+	{OperationCall} '.' name='allInstances' '(' ')' 
+	;
+
+LocalVariable returns LocalVariable :
+	name=ID ':' type=DOclType '=' initExp=DOclExpression
+;
+
+PrimaryExp returns DOclExpression:
+	SeflExp
+	| NestedExp	
+ 	| IfExp
+	| PrimitiveExp
+	| TupleExp
+	| LambdaExp
+	| DOclModelElementExp
+//	| MapExp
+//	| CollectionExp
+;
+
+LambdaExp returns DOclExpression : 
+	{LambdaExp}name='Lambda' '{' expression=DOclExpression '}'
+;
+
+//CollectionExp returns CollectionExp:
+//	  BagExp |SequenceExp | SetExp | OrderedSetExp 
+//;
+//
+//CollectionPart returns CollectionPart:
+//	CollectionRange | CollectionItem
+//;
+//
+//CollectionItem returns CollectionItem:
+//	item=DOclExpression
+//;
+//
+//CollectionRange returns CollectionRange:
+//	first=DOclExpression '..' last=DOclExpression
+//;
+//
+//BagExp returns BagExp:
+//	{BagExp} 'Bag'  '{' parts+=CollectionPart (','parts+=CollectionPart)'}'
+//;
+//
+//SequenceExp returns SequenceExp : 
+//	{SequenceExp} 'Sequence' '{' parts+=CollectionPart (','parts+=CollectionPart)'}'
+//;
+//
+//SetExp returns SetExp : 
+//	{SetExp} 'Set' '{' parts+=CollectionPart (','parts+=CollectionPart)'}'
+//;
+//
+//OrderedSetExp returns OrderedSetExp : 
+//	{OrderedSetExp} 'OrderedSetExp' '{' parts+=CollectionPart (','parts+=CollectionPart)'}'
+//;
+
+//MapExp returns DOclExpression :
+//	{MapExp} name='Map' '{' elements+=MapElement (',' elements+=MapElement)* '}'
+//;
+//
+//MapElement returns MapElement:
+//	'(' key=DOclExpression ',' value=DOclExpression ')'
+//;
+
+//BooleanOpExp returns DOclExpression:
+//	PrimaryDOclExpression ({BoolOpCallExp.source=current} name=('and' | 'or' | 'xor' | 'implies') target=PrimaryDOclExpression)*
+//;
+//
+//PrimaryDOclExpression returns DOclExpression:
+//	 PrimaryExp 
+//;
+TupleExp returns DOclExpression:
+	{TupleExp}name='Tuple' '{' parts+=TuplePart (',' parts+=TuplePart)* '}'
+;
+
+TuplePart returns TuplePart:
+	name=STRING (':' type=DOclType)? '=' init=DOclExpression
+;
+
+PrimitiveExp returns PrimitiveExp:
+	NumberExp
+	| StringExp
+	| BooleanExp
+	| UnlimitedNaturalExp
+	| InvalidExp
+	| NullExp
+;
+
+NumberExp returns NumberLiteralExp:
+	symbol=INT
+;
+
+StringExp returns StringLiteralExp:
+	segments+= STRING+
+;
+
+BooleanExp returns BooleanLiteralExp:
+	symbol='true'
+	| symbol='false'
+;
+
+UnlimitedNaturalExp returns UnlimitedNaturalLiteralExp:
+	{UnlimitedNaturalLiteralExp} '*';
+
+InvalidExp returns InvalidLiteralExp:
+	{InvalidLiteralExp} 'invalid';
+
+NullExp returns NullLiteralExp:
+	{NullLiteralExp} 'null';
+
+IfExp returns IfExp:
+	name='if' condition=DOclExpression
+	'then' then=DOclExpression
+	(ifThen+=ElseIfThenExp)*
+	'else' else=DOclExpression
+	'endif';
+
+ElseIfThenExp returns DOclExpression:
+	({ElseIfThenExp}name='elseif' condition=DOclExpression
+	'then' then=DOclExpression)
+;
+
+SeflExp returns DOclExpression:
+	{SelfExp} name='self'
+;
+
+NestedExp returns DOclExpression:
+	({NestedExp}'('exp=DOclExpression')')
+;
+
+DOclType returns DOclType:
+	 StringType | BooleanType | IntegerType | RealType | BagType | OrderedSetType | SequenceType | SetType | DOclAnyType | TupleType | DOclModelElement | MapType | LambdaType | EnvType;
+
+DOclModelElement returns DOclModelElementExp:
+	model=DOclModel'::'name=ID // Might lead the grammar into unambiguous state
+;
+
+EnvType returns EnvType:
+	name='Env'	// using the Env variable for indices/
+;
+
+LambdaType returns LambdaType:
+	name='Lambda' '('argsTypes+=DOclType (','argsTypes+=DOclType)*')' ':' returnType=DOclType
+;
+
+MapType returns MapType:
+	name='Map''('keyType=DOclType ',' valueType=DOclType')'
+;
+
+TupleType returns TupleType:
+	'TupleType'	
+;
+
+DOclAnyType returns DOclAnyType:
+	name='DOclAny'	
+;
+
+SetType returns SetType:
+	name='Set' '(' elementType=DOclType ')'
+;
+
+SequenceType returns SequenceType:
+	name='Sequence' '(' elementType=DOclType ')'
+;
+
+OrderedSetType returns OrderedSetType:
+	name='OrderedSet' '(' elementType=DOclType ')'
+;
+
+BagType returns BagType:
+	name='BagType' '(' elementType=DOclType ')'
+;
+
+RealType returns RealType:
+	name='Real'
+;
+
+IntegerType returns IntegerType:
+	name='Integer'
+;
+
+BooleanType returns BooleanType:
+	name='Boolean'
+;
+
+StringType returns StringType:
+	name='String'
+;

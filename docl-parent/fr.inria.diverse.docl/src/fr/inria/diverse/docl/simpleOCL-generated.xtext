@@ -1,0 +1,576 @@
+grammar fr.inria.diverse.docl.DOcl with org.eclipse.xtext.common.Terminals
+
+import "http://www.eclipse.org/emf/2002/Ecore" as ecore
+
+generate docl "http://fr.inria/diverse/DOcl-generated"
+
+Module returns Module:
+	{Module}
+	'module' name=EString
+	'{'
+		'@@' 'source' source=OclMetamodel
+		( imports+=Import ( imports+=Import)*)?
+		( elements+=ModuleElement ( elements+=ModuleElement)* )?
+	'}';
+
+
+OclMetamodel returns OclMetamodel:
+	{OclMetamodel}
+	'OclMetamodel'
+	name=EString
+	'{'
+		('uri' uri=String0)?
+		('elements' '(' elements+=[OclModelElement|EString] ( "," elements+=[OclModelElement|EString])* ')' )?
+		('model' '(' model+=[OclInstanceModel|EString] ( "," model+=[OclInstanceModel|EString])* ')' )?
+	'}';
+	
+Import returns Import:
+	{Import}
+	'imports'
+	name=EString;
+	
+EString returns ecore::EString:
+	STRING | ID;	
+
+ModuleElement returns ModuleElement:
+	OclFeatureDefinition;
+
+OclModel returns OclModel:
+	OclMetamodel | OclInstanceModel;
+
+OclFeature returns OclFeature:
+	Attribute | Operation;
+
+OclType returns OclType:
+	OclType_Impl | CollectionType_Impl | StringType | BooleanType | IntegerType | RealType | BagType | OrderedSetType | SequenceType | SetType | OclAnyType | TupleType | OclModelElement | MapType | LambdaType | EnvType;
+
+OclExpression returns OclExpression:
+	VariableExp_Impl | SuperExp | SelfExp | EnvExp | StringExp | BooleanExp | RealExp | IntegerExp | BagExp | OrderedSetExp | SequenceExp | SetExp | TupleExp | MapExp | EnumLiteralExp | OclUndefinedExp | StaticPropertyCallExp | PropertyCallExp | OperatorCallExp_Impl | NotOpCallExp | RelOpCallExp | EqOpCallExp | AddOpCallExp | IntOpCallExp | MulOpCallExp | LambdaCallExp | BraceExp | LetExp | IfExp | OclModelElementExp;
+
+
+VariableDeclaration returns VariableDeclaration:
+	TuplePart | LocalVariable_Impl | Iterator | Parameter;
+
+CollectionPart returns CollectionPart:
+	CollectionRange | CollectionItem;
+
+StaticPropertyCall returns StaticPropertyCall:
+	StaticNavigationOrAttributeCall | StaticOperationCall;
+
+PropertyCall returns PropertyCall:
+	NavigationOrAttributeCall | OperationCall_Impl | CollectionOperationCall | IterateExp | IteratorExp;
+
+LocalVariable returns LocalVariable:
+	LocalVariable_Impl | TuplePart;
+
+VariableExp returns VariableExp:
+	VariableExp_Impl | LambdaCallExp;
+
+OclModelElement returns OclModelElement:
+	'OclModelElement'
+	'{'
+		'name' name=String0
+		'model' model=[OclModel|EString]
+	'}';
+
+OclInstanceModel returns OclInstanceModel:
+	'OclInstanceModel'
+	name=EString
+	'{'
+		('elements' '(' elements+=[OclModelElement|EString] ( "," elements+=[OclModelElement|EString])* ')' )?
+		'metamodel' metamodel=[OclMetamodel|EString]
+	'}';
+
+String0 returns String:
+	'String' /* TODO: implement this rule and an appropriate IValueConverter */;
+	
+OclFeatureDefinition returns OclFeatureDefinition:
+	'OclFeatureDefinition'
+	'{'
+		'static' static=Boolean
+		'feature' feature=OclFeature
+		('context_' context_=OclContextDefinition)?
+	'}';
+
+OclContextDefinition returns OclContextDefinition:
+	'OclContextDefinition'
+	'{'
+		'context_' context_=OclType
+	'}';
+
+Boolean returns Boolean:
+	'Boolean' /* TODO: implement this rule and an appropriate IValueConverter */;
+
+Attribute returns Attribute:
+	'Attribute'
+	name=EString
+	'{'
+		'eq' eq=String0
+		'initExpression' initExpression=OclExpression
+		'type' type=OclType
+	'}';
+
+Operation returns Operation:
+	'Operation'
+	name=EString
+	'{'
+		'eq' eq=String0
+		('parameters' '{' parameters+=Parameter ( "," parameters+=Parameter)* '}' )?
+		'returnType' returnType=OclType
+		'body' body=OclExpression
+	'}';
+
+OclType_Impl returns OclType:
+	'OclType'
+	'{'
+		'name' name=String0
+	'}';
+
+VariableExp_Impl returns VariableExp:
+	'VariableExp'
+	'{'
+		'referredVariable' referredVariable=[VariableDeclaration|EString]
+		('type' type=OclType)?
+	'}';
+
+SuperExp returns SuperExp:
+	{SuperExp}
+	'SuperExp'
+	'{'
+		('type' type=OclType)?
+	'}';
+
+SelfExp returns SelfExp:
+	{SelfExp}
+	'SelfExp'
+	'{'
+		('type' type=OclType)?
+	'}';
+
+EnvExp returns EnvExp:
+	{EnvExp}
+	'EnvExp'
+	'{'
+		('type' type=OclType)?
+	'}';
+
+StringExp returns StringExp:
+	'StringExp'
+	'{'
+		'stringSymbol' stringSymbol=String0
+		('type' type=OclType)?
+	'}';
+
+BooleanExp returns BooleanExp:
+	'BooleanExp'
+	'{'
+		'booleanSymbol' booleanSymbol=Boolean
+		('type' type=OclType)?
+	'}';
+
+RealExp returns RealExp:
+	'RealExp'
+	'{'
+		'realSymbol' realSymbol=Double
+		('type' type=OclType)?
+	'}';
+
+IntegerExp returns IntegerExp:
+	'IntegerExp'
+	'{'
+		'integerSymbol' integerSymbol=Integer
+		('type' type=OclType)?
+	'}';
+
+BagExp returns BagExp:
+	{BagExp}
+	'BagExp'
+	'{'
+		('type' type=OclType)?
+		('parts' '{' parts+=CollectionPart ( "," parts+=CollectionPart)* '}' )?
+	'}';
+
+OrderedSetExp returns OrderedSetExp:
+	{OrderedSetExp}
+	'OrderedSetExp'
+	'{'
+		('type' type=OclType)?
+		('parts' '{' parts+=CollectionPart ( "," parts+=CollectionPart)* '}' )?
+	'}';
+
+SequenceExp returns SequenceExp:
+	{SequenceExp}
+	'SequenceExp'
+	'{'
+		('type' type=OclType)?
+		('parts' '{' parts+=CollectionPart ( "," parts+=CollectionPart)* '}' )?
+	'}';
+
+SetExp returns SetExp:
+	{SetExp}
+	'SetExp'
+	'{'
+		('type' type=OclType)?
+		('parts' '{' parts+=CollectionPart ( "," parts+=CollectionPart)* '}' )?
+	'}';
+
+TupleExp returns TupleExp:
+	{TupleExp}
+	'TupleExp'
+	'{'
+		('type' type=OclType)?
+		('tuplePart' '{' tuplePart+=TuplePart ( "," tuplePart+=TuplePart)* '}' )?
+	'}';
+
+MapExp returns MapExp:
+	{MapExp}
+	'MapExp'
+	'{'
+		('type' type=OclType)?
+		('elements' '{' elements+=MapElement ( "," elements+=MapElement)* '}' )?
+	'}';
+
+EnumLiteralExp returns EnumLiteralExp:
+	'EnumLiteralExp'
+	'{'
+		'name' name=String0
+		('type' type=OclType)?
+	'}';
+
+OclUndefinedExp returns OclUndefinedExp:
+	{OclUndefinedExp}
+	'OclUndefinedExp'
+	'{'
+		('type' type=OclType)?
+	'}';
+
+StaticPropertyCallExp returns StaticPropertyCallExp:
+	'StaticPropertyCallExp'
+	'{'
+		('type' type=OclType)?
+		'source' source=OclType
+		'staticCall' staticCall=StaticPropertyCall
+	'}';
+
+PropertyCallExp returns PropertyCallExp:
+	'PropertyCallExp'
+	'{'
+		('type' type=OclType)?
+		'calls' '{' calls+=PropertyCall ( "," calls+=PropertyCall)* '}' 
+		'source' source=OclExpression
+	'}';
+
+OperatorCallExp_Impl returns OperatorCallExp:
+	'OperatorCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+NotOpCallExp returns NotOpCallExp:
+	'NotOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+RelOpCallExp returns RelOpCallExp:
+	'RelOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+EqOpCallExp returns EqOpCallExp:
+	'EqOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+AddOpCallExp returns AddOpCallExp:
+	'AddOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+IntOpCallExp returns IntOpCallExp:
+	'IntOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+MulOpCallExp returns MulOpCallExp:
+	'MulOpCallExp'
+	'{'
+		'operationName' operationName=String0
+		('type' type=OclType)?
+		('argument' argument=OclExpression)?
+		'source' source=OclExpression
+	'}';
+
+LambdaCallExp returns LambdaCallExp:
+	'LambdaCallExp'
+	'{'
+		'referredVariable' referredVariable=[VariableDeclaration|EString]
+		('type' type=OclType)?
+		('arguments' '{' arguments+=OclExpression ( "," arguments+=OclExpression)* '}' )?
+	'}';
+
+BraceExp returns BraceExp:
+	'BraceExp'
+	'{'
+		('type' type=OclType)?
+		'exp' exp=OclExpression
+	'}';
+
+LetExp returns LetExp:
+	'LetExp'
+	'{'
+		('type' type=OclType)?
+		'variable' variable=LocalVariable
+		'in_' in_=OclExpression
+	'}';
+
+IfExp returns IfExp:
+	'IfExp'
+	'{'
+		('type' type=OclType)?
+		'thenExpression' thenExpression=OclExpression
+		'condition' condition=OclExpression
+		'elseExpression' elseExpression=OclExpression
+	'}';
+
+OclModelElementExp returns OclModelElementExp:
+	'OclModelElementExp'
+	'{'
+		'name' name=String0
+		'model' model=[OclModel|EString]
+		('type' type=OclType)?
+	'}';
+
+TuplePart returns TuplePart:
+	'TuplePart'
+	'{'
+		'varName' varName=String0
+		'eq' eq=String0
+		('variableExp' '(' variableExp+=[VariableExp|EString] ( "," variableExp+=[VariableExp|EString])* ')' )?
+		('type' type=OclType)?
+		'initExpression' initExpression=OclExpression
+	'}';
+
+LocalVariable_Impl returns LocalVariable:
+	'LocalVariable'
+	'{'
+		'varName' varName=String0
+		'eq' eq=String0
+		('variableExp' '(' variableExp+=[VariableExp|EString] ( "," variableExp+=[VariableExp|EString])* ')' )?
+		('type' type=OclType)?
+		'initExpression' initExpression=OclExpression
+	'}';
+
+Iterator returns Iterator:
+	'Iterator'
+	'{'
+		'varName' varName=String0
+		('variableExp' '(' variableExp+=[VariableExp|EString] ( "," variableExp+=[VariableExp|EString])* ')' )?
+		('type' type=OclType)?
+	'}';
+
+Parameter returns Parameter:
+	'Parameter'
+	'{'
+		'varName' varName=String0
+		('variableExp' '(' variableExp+=[VariableExp|EString] ( "," variableExp+=[VariableExp|EString])* ')' )?
+		('type' type=OclType)?
+	'}';
+
+Double returns Double:
+	'Double' /* TODO: implement this rule and an appropriate IValueConverter */;
+
+Integer returns Integer:
+	'Integer' /* TODO: implement this rule and an appropriate IValueConverter */;
+
+CollectionRange returns CollectionRange:
+	'CollectionRange'
+	'{'
+		'first' first=OclExpression
+		'last' last=OclExpression
+	'}';
+
+CollectionItem returns CollectionItem:
+	'CollectionItem'
+	'{'
+		'item' item=OclExpression
+	'}';
+
+MapElement returns MapElement:
+	'MapElement'
+	'{'
+		'key' key=OclExpression
+		'value' value=OclExpression
+	'}';
+
+StaticNavigationOrAttributeCall returns StaticNavigationOrAttributeCall:
+	'StaticNavigationOrAttributeCall'
+	'{'
+		'name' name=String0
+	'}';
+
+StaticOperationCall returns StaticOperationCall:
+	'StaticOperationCall'
+	'{'
+		'operationName' operationName=String0
+		('arguments' '{' arguments+=OclExpression ( "," arguments+=OclExpression)* '}' )?
+	'}';
+
+NavigationOrAttributeCall returns NavigationOrAttributeCall:
+	'NavigationOrAttributeCall'
+	'{'
+		'name' name=String0
+	'}';
+
+OperationCall_Impl returns OperationCall:
+	'OperationCall'
+	'{'
+		'operationName' operationName=String0
+		('arguments' '{' arguments+=OclExpression ( "," arguments+=OclExpression)* '}' )?
+	'}';
+
+CollectionOperationCall returns CollectionOperationCall:
+	'CollectionOperationCall'
+	'{'
+		'operationName' operationName=String0
+		('arguments' '{' arguments+=OclExpression ( "," arguments+=OclExpression)* '}' )?
+	'}';
+
+IterateExp returns IterateExp:
+	'IterateExp'
+	'{'
+		'body' body=OclExpression
+		'iterators' '{' iterators+=Iterator ( "," iterators+=Iterator)* '}' 
+		'result' result=LocalVariable
+	'}';
+
+IteratorExp returns IteratorExp:
+	'IteratorExp'
+	'{'
+		'name' name=String0
+		'body' body=OclExpression
+		'iterators' '{' iterators+=Iterator ( "," iterators+=Iterator)* '}' 
+	'}';
+
+CollectionType_Impl returns CollectionType:
+	'CollectionType'
+	'{'
+		'name' name=String0
+		'elementType' elementType=OclType
+	'}';
+
+StringType returns StringType:
+	'StringType'
+	'{'
+		'name' name=String0
+	'}';
+
+BooleanType returns BooleanType:
+	'BooleanType'
+	'{'
+		'name' name=String0
+	'}';
+
+IntegerType returns IntegerType:
+	'IntegerType'
+	'{'
+		'name' name=String0
+	'}';
+
+RealType returns RealType:
+	'RealType'
+	'{'
+		'name' name=String0
+	'}';
+
+BagType returns BagType:
+	'BagType'
+	'{'
+		'name' name=String0
+		'elementType' elementType=OclType
+	'}';
+
+OrderedSetType returns OrderedSetType:
+	'OrderedSetType'
+	'{'
+		'name' name=String0
+		'elementType' elementType=OclType
+	'}';
+
+SequenceType returns SequenceType:
+	'SequenceType'
+	'{'
+		'name' name=String0
+		'elementType' elementType=OclType
+	'}';
+
+SetType returns SetType:
+	'SetType'
+	'{'
+		'name' name=String0
+		'elementType' elementType=OclType
+	'}';
+
+OclAnyType returns OclAnyType:
+	'OclAnyType'
+	'{'
+		'name' name=String0
+	'}';
+
+TupleType returns TupleType:
+	'TupleType'
+	'{'
+		'name' name=String0
+		('attributes' '{' attributes+=TupleTypeAttribute ( "," attributes+=TupleTypeAttribute)* '}' )?
+	'}';
+
+MapType returns MapType:
+	'MapType'
+	'{'
+		'name' name=String0
+		'valueType' valueType=OclType
+		'keyType' keyType=OclType
+	'}';
+
+LambdaType returns LambdaType:
+	'LambdaType'
+	'{'
+		'name' name=String0
+		'returnType' returnType=OclType
+		('argumentTypes' '{' argumentTypes+=OclType ( "," argumentTypes+=OclType)* '}' )?
+	'}';
+
+EnvType returns EnvType:
+	'EnvType'
+	'{'
+		'name' name=String0
+	'}';
+
+TupleTypeAttribute returns TupleTypeAttribute:
+	'TupleTypeAttribute'
+	'{'
+		'name' name=String0
+		'type' type=OclType
+	'}';
